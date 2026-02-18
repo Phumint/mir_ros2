@@ -10,6 +10,7 @@
 
 import rclpy
 from rclpy.node import Node
+from rclpy.parameter import Parameter
 from tf2_msgs.msg import TFMessage
 from rclpy.qos import QoSProfile, DurabilityPolicy, HistoryPolicy
 
@@ -18,12 +19,21 @@ class TFRemoveChildFrames(Node):
         super().__init__('tf_remove_child_frames')
         
         # 1. Declare and read the parameter list
-        self.declare_parameter('remove_frames', [])
-        self.remove_frames = self.get_parameter('remove_frames').value
+        # We declare it WITHOUT a default value first, forcing it to look at the launch file
+        self.declare_parameter('remove_frames', Parameter.Type.STRING_ARRAY)
+        
+        # Now we try to get the parameter
+        try:
+            self.remove_frames = self.get_parameter('remove_frames').value
+            # If nothing was passed, it might return None, so we catch that
+            if self.remove_frames is None:
+                self.remove_frames = []
+        except Exception as e:
+            self.get_logger().warn(f"Could not read remove_frames: {e}. Defaulting to empty.")
+            self.remove_frames = []
         
         if not self.remove_frames:
             self.get_logger().warn("No frames specified in 'remove_frames'. Node will not filter anything.")
-
         # 2. Setup QoS Profiles
         # Standard dynamic TF (frequent updates)
         qos_dynamic = QoSProfile(
