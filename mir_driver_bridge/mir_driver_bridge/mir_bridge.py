@@ -112,8 +112,8 @@ class MiRBridge(Node):
         self.ws = None
         self.ws_lock = threading.Lock()
         
-        self.pubs = {} # topic -> publisher
-        self.subs = {} # topic -> subscription
+        self.pubs = {} 
+        self.subs = {} 
 
         # 4. Initialize ROS Publishers/Subscribers
         self._setup_ros_interfaces()

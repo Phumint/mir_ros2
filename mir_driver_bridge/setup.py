@@ -15,7 +15,7 @@ setup(
     zip_safe=True,
     maintainer='phumint',
     maintainer_email='phumint1969@gmail.com',
-    description='TODO: Package description',
+    description='ROS2 Bridge for the MiR100',
     license='TODO: License declaration',
     extras_require={
         'test': [
@@ -25,6 +25,9 @@ setup(
     entry_points={
         'console_scripts': [
             'mir_bridge = mir_driver_bridge.mir_bridge:main',
+            'fake_mir_joint_publisher = mir_driver_bridge.fake_mir_joint_publisher:main',
+            'tf_remove_child_frames = mir_driver_bridge.tf_remove_child_frames:main',
+            'rep117_filter = mir_driver_bridge.rep117_filter:main',
         ],
     },
 )
