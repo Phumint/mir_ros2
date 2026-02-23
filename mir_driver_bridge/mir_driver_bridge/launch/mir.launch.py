@@ -81,7 +81,7 @@ def generate_launch_description():
         output='screen',
         condition=IfCondition(disable_map),
         parameters=[{
-            'hostname': mir_hostname,
+            'mir_ip': mir_hostname,
             'tf_prefix': tf_prefix
         }],
         remappings=[
@@ -115,7 +115,7 @@ def generate_launch_description():
         output='screen',
         condition=UnlessCondition(disable_map),
         parameters=[{
-            'hostname': mir_hostname,
+            'mir_ip': mir_hostname,
             'tf_prefix': tf_prefix
         }],
         remappings=[

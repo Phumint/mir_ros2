@@ -4,7 +4,6 @@ from rclpy.qos import QoSProfile, DurabilityPolicy, HistoryPolicy, ReliabilityPo
 import json
 import threading
 import time
-import copy
 from websocket import WebSocketApp
 
 # ROS 2 Message Conversion Tools
@@ -19,7 +18,6 @@ from tf2_msgs.msg import TFMessage
 from std_msgs.msg import String, Header
 from diagnostic_msgs.msg import DiagnosticArray
 
-# --- FILTERS (The "Script B" Magic) ---
 
 def filter_prepend_tf_prefix(msg_dict, prefix):
     """Recursively prepends a prefix to all frame_ids in the message dict."""
@@ -174,16 +172,18 @@ class MiRBridge(Node):
             pkg = cfg.msg_type.__module__.split('.')[0]
             ros1_type = f"{pkg}/{cfg.msg_type.__name__}"
             
-            if cfg.direction == 'OUT':
+            if cfg.direction == 'OUT': 
+            # Robot -> ROS (Publisher)
                 ws.send(json.dumps({"op": "subscribe", "topic": cfg.topic, "type": ros1_type}))
             elif cfg.direction == 'IN':
+            # ROS -> Robot (Subscriber)
                 # IMPORTANT: MiR needs to know you are going to publish /cmd_vel
                 # Note: Even if we send TwistStamped data, we advertise the topic name as it exists on the MiR
                 actual_type = "geometry_msgs/TwistStamped" if cfg.topic == '/cmd_vel' else ros1_type
                 ws.send(json.dumps({"op": "advertise", "topic": cfg.topic, "type": actual_type}))
 
     def on_message(self, ws, message):
-        """Handle incoming data from MiR."""
+        """Handle incoming data from MiR. Translates ROS1 messages to ROS2 messages"""
         try:
             data = json.loads(message)
             
@@ -244,13 +244,13 @@ class MiRBridge(Node):
                 set_message_fields(msg, msg_dict)
 
                 # 3. Force Timestamp Update (Optional: keeps data "fresh")
-                current_time = self.get_clock().now().to_msg()
-                if hasattr(msg, 'header'):
-                    msg.header.stamp = current_time
+                # current_time = self.get_clock().now().to_msg()
+                # if hasattr(msg, 'header'):
+                #     msg.header.stamp = current_time
                 
-                if topic == '/tf' or topic == '/tf_static':
-                    for t in msg.transforms:
-                        t.header.stamp = current_time
+                # if topic == '/tf' or topic == '/tf_static':
+                #     for t in msg.transforms:
+                #         t.header.stamp = current_time
 
                 self.pubs[topic].publish(msg)
 
