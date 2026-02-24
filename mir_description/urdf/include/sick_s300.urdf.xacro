@@ -15,7 +15,6 @@
         <geometry>
           <mesh filename="package://mir_description/meshes/visual/sick_lms-100.stl" />
         </geometry>
-        <!-- <xacro:insert_block name="material_yellow" /> -->
         <xacro:insert_block name="material_black" />
       </visual>
       <collision>
@@ -30,18 +29,25 @@
     </link>
 
     <gazebo reference="${prefix}${link}">
-      <!-- <material value="Gazebo/Yellow" /> -->
-      <material value="Gazebo/FlatBlack" />
+      <visual>
+        <material>
+          <ambient>0.1 0.1 0.1 1.0</ambient>
+          <diffuse>0.1 0.1 0.1 1.0</diffuse>
+        </material>
+      </visual>
 
-      <sensor type="ray" name="${prefix}${link}">
+      <sensor type="gpu_lidar" name="${prefix}${link}_sensor">
         <pose>0 0 0 0 0 0</pose>
         <visualize>false</visualize>
         <update_rate>12.5</update_rate>
-        <ray>
+        <topic>${topic}</topic>
+        <gz_frame_id>${prefix}${link}</gz_frame_id>
+        
+        <lidar>
           <scan>
             <horizontal>
               <samples>541</samples>
-              <resolution>1</resolution>  <!-- has to be 1; actual resolution will be computed from number of samples + min_angle/max_angle -->
+              <resolution>1</resolution>
               <min_angle>-2.35619449615</min_angle>
               <max_angle>2.35619449615</max_angle>
             </horizontal>
@@ -53,17 +59,10 @@
           </range>
           <noise>
             <type>gaussian</type>
-            <!-- Noise parameters based on published spec for S300 achieving
-                 "+-29mm" accuracy at range < 3m (~0.01 of the range) at
-                 1 sigma. -->
             <mean>0.0</mean>
             <stddev>0.01</stddev>
           </noise>
-        </ray>
-        <plugin name="gazebo_ros_${link}_controller" filename="libgazebo_ros_laser.so">
-          <frameName>${prefix}${link}</frameName>
-          <topicName>${topic}</topicName>
-        </plugin>
+        </lidar>
       </sensor>
     </gazebo>
   </xacro:macro>

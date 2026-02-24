@@ -1,28 +1,36 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://ros.org/wiki/xacro"
-       name="mir" >
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="mir">
 
-  <!-- MiR base -->
   <xacro:include filename="$(find mir_description)/urdf/include/mir_v1.urdf.xacro" />
-  <xacro:include filename="$(find mir_description)/urdf/include/common.gazebo.xacro" />
 
   <xacro:arg name="tf_prefix" default="" />
-  <xacro:property name="tf_prefix_" value="$(arg tf_prefix)" />
-  <xacro:if value="${tf_prefix_ == ''}">
-    <xacro:property name="prefix" value="" />
-  </xacro:if>
-  <xacro:unless value="${tf_prefix_ == ''}">
-    <xacro:property name="prefix" value="${tf_prefix_}/" />
-  </xacro:unless>
+  <xacro:property name="prefix" value="$(arg tf_prefix)" />
+  <xacro:property name="prefix_with_slash" value="${prefix + '/' if prefix != '' else ''}" />
 
-  <xacro:mir prefix="${prefix}" />
-  <xacro:controller_plugin_gazebo robot_namespace=""/>
+  <xacro:mir prefix="${prefix_with_slash}" />
 
-  <!-- instead of the controller_plugin_gazebo, you can use the diffdrive controller like this:
-    <xacro:diff_controller_plugin_gazebo prefix=""
-      left_wheel_joint="left_wheel_joint"
-      right_wheel_joint="right_wheel_joint"
-      wheel_separation="${2*mir_act_wheel_dy}"
-      wheel_radius="${mir_act_wheel_radius}"/>
-  -->
+  <gazebo>
+    
+    <plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">
+      <left_joint>${prefix_with_slash}left_wheel_joint</left_joint>
+      <right_joint>${prefix_with_slash}right_wheel_joint</right_joint>
+      
+      <wheel_separation>0.445208</wheel_separation> 
+      <wheel_radius>0.0625</wheel_radius> 
+      
+      <odom_publish_frequency>50</odom_publish_frequency>
+      <topic>cmd_vel</topic>
+      <odom_topic>odom</odom_topic>
+      <frame_id>odom</frame_id>
+      <child_frame_id>${prefix_with_slash}base_footprint</child_frame_id>
+    </plugin>
+
+    <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
+      <topic>joint_states</topic>
+      <joint_name>${prefix_with_slash}left_wheel_joint</joint_name>
+      <joint_name>${prefix_with_slash}right_wheel_joint</joint_name>
+    </plugin>
+
+  </gazebo>
+
 </robot>

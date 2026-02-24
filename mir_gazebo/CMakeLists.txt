@@ -1,12 +1,15 @@
 cmake_minimum_required(VERSION 3.8)
-project(mir_description)
+project(mir_gazebo)
 
 find_package(ament_cmake REQUIRED)
 # find_package(catkin REQUIRED COMPONENTS
 #   roslaunch
 # )
 
-# find_package(urdf REQUIRED)
+###################################
+## catkin specific configuration ##
+# ###################################
+# catkin_package()
 
 #############
 ## Install ##
@@ -16,13 +19,13 @@ find_package(ament_cmake REQUIRED)
 install(DIRECTORY
   config
   launch
-  meshes
-  rviz
-  urdf
+  maps
+  sdf
   DESTINATION share/${PROJECT_NAME}
 )
 
 #############
 ## Testing ##
 #############
+
 ament_package()
