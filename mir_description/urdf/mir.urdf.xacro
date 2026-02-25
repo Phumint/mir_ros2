@@ -21,7 +21,9 @@
       <odom_publish_frequency>50</odom_publish_frequency>
       <topic>cmd_vel</topic>
       <odom_topic>odom</odom_topic>
+      <tf_topic>/tf</tf_topic>
       <frame_id>odom</frame_id>
+      <publish_odom_tf>true</publish_odom_tf>
       <child_frame_id>${prefix_with_slash}base_footprint</child_frame_id>
     </plugin>
 
@@ -29,6 +31,15 @@
       <topic>joint_states</topic>
       <joint_name>${prefix_with_slash}left_wheel_joint</joint_name>
       <joint_name>${prefix_with_slash}right_wheel_joint</joint_name>
+
+      <joint_name>${prefix_with_slash}fl_caster_rotation_joint</joint_name>
+      <joint_name>${prefix_with_slash}fl_caster_wheel_joint</joint_name>
+      <joint_name>${prefix_with_slash}fr_caster_rotation_joint</joint_name>
+      <joint_name>${prefix_with_slash}fr_caster_wheel_joint</joint_name>
+      <joint_name>${prefix_with_slash}bl_caster_rotation_joint</joint_name>
+      <joint_name>${prefix_with_slash}bl_caster_wheel_joint</joint_name>
+      <joint_name>${prefix_with_slash}br_caster_rotation_joint</joint_name>
+      <joint_name>${prefix_with_slash}br_caster_wheel_joint</joint_name>
     </plugin>
 
   </gazebo>
