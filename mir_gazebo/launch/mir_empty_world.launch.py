@@ -22,12 +22,19 @@ def generate_launch_description():
         value=workspace_share_dir
     )
 
+    # Set the world path
+    world_path = PathJoinSubstitution([
+        mir_gazebo_dir,
+        'worlds',
+        'empty.world.sdf' 
+    ])
+
     # 3. Launch Modern Gazebo (Fortress) with an empty world
     gazebo_server = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([ros_gz_sim_dir, 'launch', 'gz_sim.launch.py'])
         ),
-        launch_arguments={'gz_args': '-r empty.sdf'}.items()
+        launch_arguments={'gz_args': ['-r ', world_path]}.items()
     )
 
     # 4. Include our common launch file to spawn the robot and bridge

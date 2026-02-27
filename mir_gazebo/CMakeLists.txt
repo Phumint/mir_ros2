@@ -21,6 +21,7 @@ install(DIRECTORY
   launch
   maps
   sdf
+  worlds
   DESTINATION share/${PROJECT_NAME}
 )
 
