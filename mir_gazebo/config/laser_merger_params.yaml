@@ -1,0 +1,19 @@
+dual_laser_merger_node:
+  ros__parameters:
+    # Frame and Topic Configuration
+    target_frame: "base_link"      # The center of the robot
+    laser_1_topic: "/f_scan"       # Front laser from Gazebo
+    laser_2_topic: "/b_scan"       # Back laser from Gazebo
+    merged_topic: "/scan"          # The unified output topic
+    
+    # Scanner Specifications (Matches the SICK S300 on the real MiR)
+    publish_rate: 20               # Hz (Publish every 50ms)
+    angle_increment: 0.0058        # ~0.33 degrees resolution
+    scan_time: 0.05
+    range_min: 0.05                # 5 cm minimum range
+    range_max: 29.0                # 29 meters max range
+    min_height: -1.0               # Z-axis crop (ignore ground hits)
+    max_height: 1.0                # Z-axis crop (ignore ceiling hits)
+    angle_min: -3.14159            # Full 360 degree output (-180 deg)
+    angle_max: 3.14159             # Full 360 degree output (+180 deg)
+    use_inf: false                  # Use 'inf' for out-of-range beams

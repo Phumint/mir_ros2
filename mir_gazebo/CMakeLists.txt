@@ -22,6 +22,7 @@ install(DIRECTORY
   maps
   sdf
   worlds
+  rviz
   DESTINATION share/${PROJECT_NAME}
 )
 

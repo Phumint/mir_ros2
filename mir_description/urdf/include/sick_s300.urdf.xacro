@@ -9,6 +9,7 @@
   <xacro:property name="laser_mass" value="1.2" />
 
   <xacro:macro name="sick_s300" params="link topic prefix">
+    <!-- 1. The Physical Mounting Link (Back of scanner/bolts) -->
     <link name="${prefix}${link}">
       <visual>
         <origin xyz="0.0 0.0 0.0" rpy="${pi} 0 0" />
@@ -28,21 +29,25 @@
       </xacro:box_inertial>
     </link>
 
-    <gazebo reference="${prefix}${link}">
-      <visual>
-        <material>
-          <ambient>0.1 0.1 0.1 1.0</ambient>
-          <diffuse>0.1 0.1 0.1 1.0</diffuse>
-        </material>
-      </visual>
+    <!-- 2. The Optical/Calibrated Frame -->
+    <!-- We name this '_calibrated' to satisfy your C++ node's hardcoded requirement -->
+    <!-- This ensures the transform is published by robot_state_publisher at 10kHz -->
+    <joint name="${prefix}${link}_calibrated_joint" type="fixed">
+      <origin xyz="0.045 0 0" rpy="0 0 0" />
+      <parent link="${prefix}${link}" />
+      <child link="${prefix}${link}_calibrated" />
+    </joint>
+    <link name="${prefix}${link}_calibrated" />
 
+    <gazebo reference="${prefix}${link}">
       <sensor type="gpu_lidar" name="${prefix}${link}_sensor">
-        <pose>0.045 0 0 0 0 0</pose> <!-- A bit of an offset to escape the mesh block --> 
+        <pose>0.045 0 0 0 0 0</pose> 
         <visualize>true</visualize>
-        <update_rate>12.5</update_rate>
+        <update_rate>30.0</update_rate> 
         <self_collide>false</self_collide>
         <topic>${topic}</topic>
-        <gz_frame_id>${prefix}${link}</gz_frame_id>
+        <!-- Use the calibrated ID so Gazebo, the Bridge, and the Merger all agree -->
+        <gz_frame_id>${prefix}${link}_calibrated</gz_frame_id>
         
         <lidar>
           <scan>

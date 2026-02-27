@@ -2,6 +2,7 @@ import os
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
+from ament_index_python.packages import get_package_share_directory
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
@@ -50,8 +51,43 @@ def generate_launch_description():
         output='screen'
     )
 
+    #6. Merge our lasers (/f_scan and /b_scan)
+    #path to the merger
+    laser_merger_params = os.path.join(
+        get_package_share_directory('mir_gazebo'),
+        'config',
+        'laser_merger_params.yaml'
+    )
+
+    laser_merger_node = Node(
+        package = 'dual_laser_merger',
+        executable = 'dual_laser_merger_node',
+        name = 'dual_laser_merger_node',
+        output = 'screen',
+        parameters=[laser_merger_params, {'use_sim_time': True}],
+        remappings = [('/merged', '/scan')]
+    )
+
+    #7. Open RViz2 with the rviz config as well
+    rviz_config_file = os.path.join(
+        get_package_share_directory('mir_gazebo'),
+        'rviz',
+        'rviz_config.rviz'
+    )
+
+    rviz_node = Node(
+        package = 'rviz2',
+        executable = 'rviz2',
+        name = 'rviz2',
+        output = 'screen',
+        arguments = ['-d', rviz_config_file],
+        parameters = [{'use_sim_time': True}]
+    )
+
     return LaunchDescription([
         robot_state_publisher_node,
         spawn_entity_node,
-        ros_gz_bridge_node
+        ros_gz_bridge_node,
+        laser_merger_node,
+        rviz_node
     ])
