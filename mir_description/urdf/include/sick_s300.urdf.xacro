@@ -37,9 +37,10 @@
       </visual>
 
       <sensor type="gpu_lidar" name="${prefix}${link}_sensor">
-        <pose>0 0 0 0 0 0</pose>
-        <visualize>false</visualize>
+        <pose>0.045 0 0 0 0 0</pose> <!-- A bit of an offset to escape the mesh block --> 
+        <visualize>true</visualize>
         <update_rate>12.5</update_rate>
+        <self_collide>false</self_collide>
         <topic>${topic}</topic>
         <gz_frame_id>${prefix}${link}</gz_frame_id>
         
