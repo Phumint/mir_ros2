@@ -51,8 +51,8 @@ def generate_launch_description():
 
     # TF Remove State Publisher Frames
     tf_remove_state_publisher_frames_node = Node(
-        package='mir_driver',
-        executable='tf_remove_child_frames.py',
+        package='mir_driver_bridge',
+        executable='tf_remove_child_frames',
         output='screen',
         remappings=[
             ('tf_in', 'tf_rss'),
@@ -76,8 +76,8 @@ def generate_launch_description():
 
     # MiR Bridge (When disable_map is TRUE)
     mir_bridge_no_map_node = Node(
-        package='mir_driver',
-        executable='mir_bridge.py',
+        package='mir_driver_bridge',
+        executable='mir_bridge',
         output='screen',
         condition=IfCondition(disable_map),
         parameters=[{
@@ -95,8 +95,8 @@ def generate_launch_description():
 
     # TF Remove MiR Map Frame (When disable_map is TRUE)
     tf_remove_mir_map_frame_node = Node(
-        package='mir_driver',
-        executable='tf_remove_child_frames.py',
+        package='mir_driver_bridge',
+        executable='tf_remove_child_frames',
         output='screen',
         condition=IfCondition(disable_map),
         remappings=[
@@ -110,8 +110,8 @@ def generate_launch_description():
 
     # MiR Bridge (When disable_map is FALSE)
     mir_bridge_with_map_node = Node(
-        package='mir_driver',
-        executable='mir_bridge.py',
+        package='mir_driver_bridge',
+        executable='mir_bridge',
         output='screen',
         condition=UnlessCondition(disable_map),
         parameters=[{
@@ -129,8 +129,8 @@ def generate_launch_description():
 
     # Laser Filters
     b_rep117_laser_filter_node = Node(
-        package='mir_driver',
-        executable='rep117_filter.py',
+        package='mir_driver_bridge',
+        executable='rep117_filter',
         output='screen',
         remappings=[
             ('scan', 'b_scan'),
@@ -140,8 +140,8 @@ def generate_launch_description():
 
     # Front Laser Filter
     f_rep117_laser_filter_node = Node(
-        package='mir_driver',
-        executable='rep117_filter.py',
+        package='mir_driver_bridge',
+        executable='rep117_filter',
         output='screen',
         remappings=[
             ('scan', 'f_scan'),
@@ -151,8 +151,8 @@ def generate_launch_description():
 
     # Fake Joint Publisher
     fake_mir_joint_publisher_node = Node(
-        package='mir_driver',
-        executable='fake_mir_joint_publisher.py',
+        package='mir_driver_bridge',
+        executable='fake_mir_joint_publisher',
         output='screen'
     )
 
