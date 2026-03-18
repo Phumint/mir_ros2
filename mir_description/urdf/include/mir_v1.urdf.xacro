@@ -139,25 +139,23 @@
     </link>
 
     <gazebo reference="${prefix}${locationprefix}_caster_wheel_link">
-      <visual>
-        <material>
-          <ambient>0.1 0.1 0.1 1</ambient>
-          <diffuse>0.1 0.1 0.1 1</diffuse>
-        </material>
-      </visual>
-      <collision>
-        <surface>
-          <friction>
-            <ode>
-              <mu>0.0</mu> <mu2>0.0</mu2>
-              <slip1>1.0</slip1>
-              <slip2>1.0</slip2>
-            </ode>
-          </friction>
-        </surface>
-      </collision>
-    </gazebo>
-  </xacro:macro>
+        <!-- These must be flat under the gazebo tag for the URDF parser to see them! -->
+        <mu1>0.0</mu1>
+        <mu2>0.0</mu2>
+        <kp>10000000.0</kp>
+        <kd>1.0</kd>
+        <minDepth>0.001</minDepth>
+        <maxVel>1.0</maxVel>
+        
+        <!-- Keep your visual settings -->
+        <visual>
+          <material>
+            <ambient>0.1 0.1 0.1 1</ambient>
+            <diffuse>0.1 0.1 0.1 1</diffuse>
+          </material>
+        </visual>
+      </gazebo>
+    </xacro:macro>
 
   <xacro:macro name="mir" params="prefix">
     <link name="${prefix}base_footprint" />
@@ -193,7 +191,7 @@
       <origin xyz="0.0 0.0 0.25" rpy="0 0 0" /> 
     </joint>
     <link name="${prefix}imu_link" />
-    <xacro:imu_gazebo link="${prefix}imu_link" imu_topic="imu_data" update_rate="50.0" />
+    <xacro:imu_gazebo link="${prefix}imu_link" imu_topic="imu" update_rate="50.0" />
 
     <joint name="${prefix}imu_link_to_imu_frame_joint" type="fixed">
       <parent link="${prefix}imu_link" />

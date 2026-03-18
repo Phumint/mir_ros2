@@ -43,7 +43,7 @@
       <sensor type="gpu_lidar" name="${prefix}${link}_sensor">
         <pose>0.045 0 0 0 0 0</pose> 
         <visualize>true</visualize>
-        <update_rate>30.0</update_rate> 
+        <update_rate>10.0</update_rate> 
         <self_collide>false</self_collide>
         <topic>${topic}</topic>
         <!-- Use the calibrated ID so Gazebo, the Bridge, and the Merger all agree -->
@@ -52,7 +52,7 @@
         <lidar>
           <scan>
             <horizontal>
-              <samples>541</samples>
+              <samples>360</samples>
               <resolution>1</resolution>
               <min_angle>-2.35619449615</min_angle>
               <max_angle>2.35619449615</max_angle>
