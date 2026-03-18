@@ -2,7 +2,9 @@ import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, DurabilityPolicy, HistoryPolicy, ReliabilityPolicy
 import json
+import orjson  # Add this for high-speed parsing
 import threading
+import queue
 import time
 from websocket import WebSocketApp
 
@@ -85,14 +87,16 @@ class MiRBridge(Node):
         if self.tf_prefix:
             self.get_logger().info(f"Operating with TF Prefix: {self.tf_prefix}")
 
+        # [NEW] Thread-safe queue for handling incoming WS messages quickly
+        self.msg_queue = queue.Queue(maxsize=100)
+
         # 2. Define Topics (Production List)
-        # We wrap the generic filter with our specific prefix
         self.topics = [
             # -- OUT (Sensors) --
             TopicConfig('/odom', Odometry, 'OUT'),
             TopicConfig('/scan', LaserScan, 'OUT'),
-            TopicConfig('/b_scan', LaserScan, 'OUT'),
-            TopicConfig('/f_scan', LaserScan, 'OUT'),
+            # TopicConfig('/b_scan', LaserScan, 'OUT'),
+            # TopicConfig('/f_scan', LaserScan, 'OUT'),
             TopicConfig('/imu_data', Imu, 'OUT'),
             TopicConfig('/robot_pose', Pose, 'OUT'),
             TopicConfig('/tf', TFMessage, 'OUT'),
@@ -116,6 +120,10 @@ class MiRBridge(Node):
         # 4. Initialize ROS Publishers/Subscribers
         self._setup_ros_interfaces()
 
+        # [NEW] Start Worker Thread for JSON parsing
+        self.worker_thread = threading.Thread(target=self._process_queue, daemon=True)
+        self.worker_thread.start()
+
         # 5. Start Connection
         self.ws_thread = threading.Thread(target=self.run_ws)
         self.ws_thread.daemon = True
@@ -124,14 +132,11 @@ class MiRBridge(Node):
     def _setup_ros_interfaces(self):
         """Creates all ROS 2 publishers and subscribers based on config."""
         for cfg in self.topics:
-            # Add prefix to ROS topic name if needed, or keep standard
-            # Usually we publish to /mir_prefix/odom if prefix is set
             ros_topic_name = cfg.topic
             if self.tf_prefix and not ros_topic_name.startswith('/'):
                  ros_topic_name = f"{self.tf_prefix}/{cfg.topic}"
 
             if cfg.direction == 'OUT':
-                # Robot -> ROS (Publisher)
                 qos = QoSProfile(depth=10)
                 if cfg.latch:
                     qos.durability = DurabilityPolicy.TRANSIENT_LOCAL
@@ -140,7 +145,6 @@ class MiRBridge(Node):
                 self.pubs[cfg.topic] = pub
                 
             elif cfg.direction == 'IN':
-                # ROS -> Robot (Subscriber)
                 self.subs[cfg.topic] = self.create_subscription(
                     cfg.msg_type,
                     ros_topic_name,
@@ -168,95 +172,103 @@ class MiRBridge(Node):
     def on_open(self, ws):
         self.get_logger().info("Connection Established!")
         for cfg in self.topics:
-            # Use the ROS 1 type name
             pkg = cfg.msg_type.__module__.split('.')[0]
             ros1_type = f"{pkg}/{cfg.msg_type.__name__}"
             
             if cfg.direction == 'OUT': 
-            # Robot -> ROS (Publisher)
                 ws.send(json.dumps({"op": "subscribe", "topic": cfg.topic, "type": ros1_type}))
             elif cfg.direction == 'IN':
-            # ROS -> Robot (Subscriber)
-                # IMPORTANT: MiR needs to know you are going to publish /cmd_vel
-                # Note: Even if we send TwistStamped data, we advertise the topic name as it exists on the MiR
                 actual_type = "geometry_msgs/TwistStamped" if cfg.topic == '/cmd_vel' else ros1_type
                 ws.send(json.dumps({"op": "advertise", "topic": cfg.topic, "type": actual_type}))
 
     def on_message(self, ws, message):
-        """Handle incoming data from MiR. Translates ROS1 messages to ROS2 messages"""
+        """[NEW] Producer: Just drops raw text into the queue instantly."""
         try:
-            data = json.loads(message)
-            
-            if 'topic' not in data or 'msg' not in data:
-                return
+            self.msg_queue.put_nowait(message)
+        except queue.Full:
+            self.get_logger().warn("Bridge Queue Full! Dropping data.")
 
-            topic = data['topic']
-            msg_dict = data['msg']
-            
-            if topic in self.pubs:
-                # ==========================================
-                # PATCH 1: REMOVE 'seq' (Fixes the crash)
-                # ==========================================
-                # Fix main header
-                if 'header' in msg_dict and 'seq' in msg_dict['header']:
-                    del msg_dict['header']['seq']
-
-                # Fix TF headers (Transforms are lists of headers)
-                if 'transforms' in msg_dict:
-                    for t in msg_dict['transforms']:
-                        if 'header' in t and 'seq' in t['header']:
-                            del t['header']['seq']
-
-                # ==========================================
-                # PATCH 2: FIX TIME (secs -> sec)
-                # ==========================================
-                if 'header' in msg_dict and 'stamp' in msg_dict['header']:
-                    stamp = msg_dict['header']['stamp']
-                    if 'secs' in stamp: stamp['sec'] = stamp.pop('secs')
-                    if 'nsecs' in stamp: stamp['nanosec'] = stamp.pop('nsecs')
+    def _process_queue(self):
+        """[NEW] Consumer: Handles incoming data and translation in the background."""
+        while rclpy.ok():
+            try:
+                raw_message = self.msg_queue.get(timeout=1.0)
+                data = orjson.loads(raw_message)
                 
-                if 'transforms' in msg_dict:
-                    for t in msg_dict['transforms']:
-                        if 'header' in t and 'stamp' in t['header']:
-                            s = t['header']['stamp']
-                            if 'secs' in s: s['sec'] = s.pop('secs')
-                            if 'nsecs' in s: s['nanosec'] = s.pop('nsecs')
+                if 'topic' not in data or 'msg' not in data:
+                    continue
 
-                # ==========================================
-                # PATCH 3: FIX DIAGNOSTICS (Byte conversion)
-                # ==========================================
-                if topic == '/diagnostics' and 'status' in msg_dict:
-                    for status in msg_dict['status']:
-                        if 'level' in status:
-                             # ROS 2 expects a byte, but JSON gives int. 
-                             # We force it to bytes.
-                             status['level'] = bytes([status['level']])
-
-                # 1. Apply TF Prefix Filter
-                if self.tf_prefix:
-                    msg_dict = filter_prepend_tf_prefix(msg_dict, self.tf_prefix)
-
-                # 2. Convert Dictionary -> ROS 2 Message
-                target_type = next((t.msg_type for t in self.topics if t.topic == topic), None)
-                if not target_type: return
-
-                msg = target_type()
-                set_message_fields(msg, msg_dict)
-
-                # 3. Force Timestamp Update (Optional: keeps data "fresh")
-                # current_time = self.get_clock().now().to_msg()
-                # if hasattr(msg, 'header'):
-                #     msg.header.stamp = current_time
+                topic = data['topic']
+                msg_dict = data['msg']
                 
-                # if topic == '/tf' or topic == '/tf_static':
-                #     for t in msg.transforms:
-                #         t.header.stamp = current_time
+                if topic in self.pubs:
+                    # ==========================================
+                    # PATCH 1: REMOVE 'seq' (Fixes the crash)
+                    # ==========================================
+                    if 'header' in msg_dict and 'seq' in msg_dict['header']:
+                        del msg_dict['header']['seq']
 
-                self.pubs[topic].publish(msg)
+                    if 'transforms' in msg_dict:
+                        for t in msg_dict['transforms']:
+                            if 'header' in t and 'seq' in t['header']:
+                                del t['header']['seq']
 
-        except Exception as e:
-            # Print the specific error to help debug
-            self.get_logger().warn(f"Parse error on {topic}: {e}")
+                    # ==========================================
+                    # PATCH 2: FIX TIME (secs -> sec)
+                    # ==========================================
+                    if 'header' in msg_dict and 'stamp' in msg_dict['header']:
+                        stamp = msg_dict['header']['stamp']
+                        if 'secs' in stamp: stamp['sec'] = stamp.pop('secs')
+                        if 'nsecs' in stamp: stamp['nanosec'] = stamp.pop('nsecs')
+                    
+                    if 'transforms' in msg_dict:
+                        for t in msg_dict['transforms']:
+                            if 'header' in t and 'stamp' in t['header']:
+                                s = t['header']['stamp']
+                                if 'secs' in s: s['sec'] = s.pop('secs')
+                                if 'nsecs' in s: s['nanosec'] = s.pop('nsecs')
+
+                    # ==========================================
+                    # PATCH 3: FIX DIAGNOSTICS (Byte conversion)
+                    # ==========================================
+                    if topic == '/diagnostics' and 'status' in msg_dict:
+                        for status in msg_dict['status']:
+                            if 'level' in status:
+                                 status['level'] = bytes([status['level']])
+
+                    # 1. Apply TF Prefix Filter
+                    if self.tf_prefix:
+                        msg_dict = filter_prepend_tf_prefix(msg_dict, self.tf_prefix)
+
+                    # 2. Convert Dictionary -> ROS 2 Message
+                    target_type = next((t.msg_type for t in self.topics if t.topic == topic), None)
+                    if not target_type: continue
+
+                    msg = target_type()
+                    set_message_fields(msg, msg_dict)
+
+                    # ==========================================
+                    # NEW: SCAN LATENCY TRACKING
+                    # ==========================================
+                    if topic == '/scan' and hasattr(msg, 'header'):
+                        # Combine sec and nanosec into a single float
+                        msg_time = msg.header.stamp.sec + (msg.header.stamp.nanosec / 1e9)
+                        # Get current ROS 2 time
+                        current_time = self.get_clock().now().nanoseconds / 1e9
+                        
+                        latency_ms = (current_time - msg_time) * 1000.0
+                        
+                        # Print it to the terminal
+                        self.get_logger().info(f"Latency on /scan: {latency_ms:.2f} ms")
+                    # ==========================================
+
+                    # 3. Publish to ROS 2
+                    self.pubs[topic].publish(msg)
+
+            except queue.Empty:
+                continue
+            except Exception as e:
+                self.get_logger().warn(f"Worker parse error: {e}")
 
     def ros_to_mir_callback(self, msg, cfg):
         try:
@@ -265,8 +277,6 @@ class MiRBridge(Node):
             
             # 2. MATCH THE DFKI FILTER: Wrap Twist into TwistStamped
             if cfg.topic == '/cmd_vel':
-                # MiR >= 2.7 expects geometry_msgs/TwistStamped
-                # We construct the ROS 1-style dictionary manually
                 ros1_type = "geometry_msgs/TwistStamped"
                 payload = {
                     'header': {
@@ -277,7 +287,6 @@ class MiRBridge(Node):
                     'twist': msg_dict  # This contains the linear/angular dicts
                 }
             else:
-                # Standard logic for other topics
                 pkg = cfg.msg_type.__module__.split('.')[0]
                 name = cfg.msg_type.__name__
                 ros1_type = f"{pkg}/{name}"
