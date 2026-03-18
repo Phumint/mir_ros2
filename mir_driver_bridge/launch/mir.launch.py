@@ -9,6 +9,12 @@ from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
     # --- 1. Launch Configurations (Arguments) ---
+    start_rsp = LaunchConfiguration('start_rsp')
+
+    declare_start_rsp_cmd = DeclareLaunchArgument(
+        'start_rsp', default_value='true', 
+        description="Whether to start the robot_state_publisher")
+
     mir_type = LaunchConfiguration('mir_type')
     tf_prefix = LaunchConfiguration('tf_prefix')
     mir_hostname = LaunchConfiguration('mir_hostname')
@@ -42,6 +48,7 @@ def generate_launch_description():
         package='robot_state_publisher',
         executable='robot_state_publisher',
         output='screen',
+        condition=IfCondition(start_rsp), # <--- Add this line
         parameters=[robot_description],
         remappings=[
             ('/tf', 'tf_rss'),
@@ -128,26 +135,26 @@ def generate_launch_description():
     )
 
     # Laser Filters
-    b_rep117_laser_filter_node = Node(
-        package='mir_driver_bridge',
-        executable='rep117_filter',
-        output='screen',
-        remappings=[
-            ('scan', 'b_scan'),
-            ('scan_filtered', 'b_scan_rep117')
-        ]
-    )
+    # b_rep117_laser_filter_node = Node(
+    #     package='mir_driver_bridge',
+    #     executable='rep117_filter',
+    #     output='screen',
+    #     remappings=[
+    #         ('scan', 'b_scan'),
+    #         ('scan_filtered', 'b_scan_rep117')
+    #     ]
+    # )
 
-    # Front Laser Filter
-    f_rep117_laser_filter_node = Node(
-        package='mir_driver_bridge',
-        executable='rep117_filter',
-        output='screen',
-        remappings=[
-            ('scan', 'f_scan'),
-            ('scan_filtered', 'f_scan_rep117')
-        ]
-    )
+    # # Front Laser Filter
+    # f_rep117_laser_filter_node = Node(
+    #     package='mir_driver_bridge',
+    #     executable='rep117_filter',
+    #     output='screen',
+    #     remappings=[
+    #         ('scan', 'f_scan'),
+    #         ('scan_filtered', 'f_scan_rep117')
+    #     ]
+    # )
 
     # Fake Joint Publisher
     fake_mir_joint_publisher_node = Node(
@@ -158,6 +165,7 @@ def generate_launch_description():
 
     # --- 5. Build and Return the Launch Description ---
     return LaunchDescription([
+        declare_start_rsp_cmd,
         declare_mir_type_cmd,
         declare_tf_prefix_cmd,
         declare_mir_hostname_cmd,
@@ -170,7 +178,7 @@ def generate_launch_description():
         tf_remove_mir_map_frame_node,
         mir_bridge_with_map_node,
         
-        b_rep117_laser_filter_node,
-        f_rep117_laser_filter_node,
+        # b_rep117_laser_filter_node,
+        # f_rep117_laser_filter_node,
         fake_mir_joint_publisher_node
     ])
