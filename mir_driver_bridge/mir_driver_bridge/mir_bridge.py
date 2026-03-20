@@ -137,9 +137,27 @@ class MiRBridge(Node):
                  ros_topic_name = f"{self.tf_prefix}/{cfg.topic}"
 
             if cfg.direction == 'OUT':
-                qos = QoSProfile(depth=10)
                 if cfg.latch:
-                    qos.durability = DurabilityPolicy.TRANSIENT_LOCAL
+                    # 1. /tf_static (Latched, Reliable for late-joiners)
+                    qos = QoSProfile(
+                        depth=10,
+                        durability=DurabilityPolicy.TRANSIENT_LOCAL,
+                        reliability=ReliabilityPolicy.RELIABLE
+                    )
+                elif cfg.topic == '/tf':
+                    # 2. /tf MUST be Reliable in ROS 2, or standard nodes reject it!
+                    qos = QoSProfile(
+                        depth=100, 
+                        durability=DurabilityPolicy.VOLATILE,
+                        reliability=ReliabilityPolicy.RELIABLE
+                    )
+                else:
+                    # 3. /scan, /odom, /imu_data (High-speed sensors: Best Effort, drop old data)
+                    qos = QoSProfile(
+                        depth=1,  
+                        durability=DurabilityPolicy.VOLATILE,
+                        reliability=ReliabilityPolicy.BEST_EFFORT
+                    )
                 
                 pub = self.create_publisher(cfg.msg_type, ros_topic_name, qos)
                 self.pubs[cfg.topic] = pub
@@ -229,12 +247,31 @@ class MiRBridge(Node):
                                 if 'nsecs' in s: s['nanosec'] = s.pop('nsecs')
 
                     # ==========================================
+                    # SURGICAL TF FILTER (Odometry ONLY)
+                    # ==========================================
+                    if topic == '/tf' and 'transforms' in msg_dict:
+                        filtered_transforms = []
+                        for t in msg_dict['transforms']:
+                            child_frame = t.get('child_frame_id', '')
+                            
+                            # Only bridge the core odometry from the MiR base
+                            if child_frame == 'base_footprint':
+                                filtered_transforms.append(t)
+                                
+                        # If it's anything else (wheels, lasers), drop it.
+                        # The laptop's robot_state_publisher handles the rest!
+                        if not filtered_transforms:
+                            continue
+                        
+                        msg_dict['transforms'] = filtered_transforms
+
+                    # ==========================================
                     # PATCH 3: FIX DIAGNOSTICS (Byte conversion)
                     # ==========================================
                     if topic == '/diagnostics' and 'status' in msg_dict:
                         for status in msg_dict['status']:
                             if 'level' in status:
-                                 status['level'] = bytes([status['level']])
+                                status['level'] = bytes([status['level']])
 
                     # 1. Apply TF Prefix Filter
                     if self.tf_prefix:
@@ -248,18 +285,18 @@ class MiRBridge(Node):
                     set_message_fields(msg, msg_dict)
 
                     # ==========================================
-                    # NEW: SCAN LATENCY TRACKING
+                    # LASER FILTER: Stop Multiplexing!
                     # ==========================================
                     if topic == '/scan' and hasattr(msg, 'header'):
-                        # Combine sec and nanosec into a single float
-                        msg_time = msg.header.stamp.sec + (msg.header.stamp.nanosec / 1e9)
-                        # Get current ROS 2 time
-                        current_time = self.get_clock().now().nanoseconds / 1e9
-                        
-                        latency_ms = (current_time - msg_time) * 1000.0
-                        
-                        # Print it to the terminal
-                        self.get_logger().info(f"Latency on /scan: {latency_ms:.2f} ms")
+                        # If it is NOT the front laser, drop it into the void
+                        if msg_dict.get('header', {}).get('frame_id', '') != 'front_laser_link':
+                            continue 
+                            
+                        # # If it IS the front laser, calculate latency
+                        # msg_time = msg.header.stamp.sec + (msg.header.stamp.nanosec / 1e9)
+                        # current_time = self.get_clock().now().nanoseconds / 1e9
+                        # latency_ms = (current_time - msg_time) * 1000.0
+                        # self.get_logger().info(f"Latency on /scan: {latency_ms:.2f} ms")
                     # ==========================================
 
                     # 3. Publish to ROS 2
