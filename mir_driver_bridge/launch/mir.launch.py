@@ -50,10 +50,10 @@ def generate_launch_description():
         output='screen',
         condition=IfCondition(start_rsp), # <--- Add this line
         parameters=[robot_description],
-        remappings=[
-            ('/tf', 'tf_rss'),
-            ('/tf_static', 'tf_static_rss')
-        ]
+        # remappings=[
+        #     ('/tf', 'tf_rss'),
+        #     ('/tf_static', 'tf_static_rss')
+        # ]
     )
 
     # TF Remove State Publisher Frames
@@ -172,7 +172,7 @@ def generate_launch_description():
         declare_disable_map_cmd,
         
         rsp_node,
-        tf_remove_state_publisher_frames_node,
+        # tf_remove_state_publisher_frames_node,
         
         mir_bridge_no_map_node,
         tf_remove_mir_map_frame_node,
