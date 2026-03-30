@@ -1,7 +1,7 @@
 dual_laser_merger_node:
   ros__parameters:
     # Frame and Topic Configuration
-    target_frame: "base_link"      # The center of the robot
+    target_frame: "base_footprint"      # The center of the robot
     laser_1_topic: "/f_scan"       # Front laser from Gazebo
     laser_2_topic: "/b_scan"       # Back laser from Gazebo
     
