@@ -62,12 +62,13 @@ def filter_remove_tf_prefix(msg_dict, prefix):
 # --- CONFIGURATION CLASS ---
 
 class TopicConfig:
-    def __init__(self, topic, msg_type, direction='OUT', latch=False, dict_filter=None):
+    def __init__(self, topic, msg_type, direction='OUT', latch=False, dict_filter=None, ros_topic=None):
         self.topic = topic
         self.msg_type = msg_type
         self.direction = direction  # 'OUT' (Robot->ROS) or 'IN' (ROS->Robot)
         self.latch = latch
         self.dict_filter = dict_filter
+        self.ros_topic = ros_topic or topic
 
 # --- MAIN NODE ---
 
@@ -93,10 +94,10 @@ class MiRBridge(Node):
         # 2. Define Topics (Production List)
         self.topics = [
             # -- OUT (Sensors) --
-            TopicConfig('/odom', Odometry, 'OUT'),
-            TopicConfig('/scan', LaserScan, 'OUT'),
-            # TopicConfig('/b_scan', LaserScan, 'OUT'),
-            # TopicConfig('/f_scan', LaserScan, 'OUT'),
+            TopicConfig('/odom', Odometry, 'OUT', ros_topic='/odometry/filtered'),
+            # TopicConfig('/scan', LaserScan, 'OUT'),
+            TopicConfig('/b_scan', LaserScan, 'OUT'),
+            TopicConfig('/f_scan', LaserScan, 'OUT'),
             TopicConfig('/imu_data', Imu, 'OUT'),
             TopicConfig('/robot_pose', Pose, 'OUT'),
             TopicConfig('/tf', TFMessage, 'OUT'),
