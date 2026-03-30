@@ -133,7 +133,7 @@ class MiRBridge(Node):
     def _setup_ros_interfaces(self):
         """Creates all ROS 2 publishers and subscribers based on config."""
         for cfg in self.topics:
-            ros_topic_name = cfg.topic
+            ros_topic_name = cfg.ros_topic
             if self.tf_prefix and not ros_topic_name.startswith('/'):
                  ros_topic_name = f"{self.tf_prefix}/{cfg.topic}"
 
@@ -285,20 +285,35 @@ class MiRBridge(Node):
                     msg = target_type()
                     set_message_fields(msg, msg_dict)
 
-                    # ==========================================
-                    # LASER FILTER: Stop Multiplexing!
-                    # ==========================================
-                    if topic == '/scan' and hasattr(msg, 'header'):
-                        # If it is NOT the front laser, drop it into the void
-                        if msg_dict.get('header', {}).get('frame_id', '') != 'front_laser_link':
-                            continue 
+                    # # ==========================================
+                    # # LASER FILTER: Stop Multiplexing!
+                    # # ==========================================
+                    # if topic == '/scan' and hasattr(msg, 'header'):
+                    #     # If it is NOT the front laser, drop it into the void
+                    #     if msg_dict.get('header', {}).get('frame_id', '') != 'front_laser_link':
+                    #         continue 
                             
-                        # # If it IS the front laser, calculate latency
-                        # msg_time = msg.header.stamp.sec + (msg.header.stamp.nanosec / 1e9)
-                        # current_time = self.get_clock().now().nanoseconds / 1e9
-                        # latency_ms = (current_time - msg_time) * 1000.0
-                        # self.get_logger().info(f"Latency on /scan: {latency_ms:.2f} ms")
-                    # ==========================================
+                    #     # # If it IS the front laser, calculate latency
+                    #     # msg_time = msg.header.stamp.sec + (msg.header.stamp.nanosec / 1e9)
+                    #     # current_time = self.get_clock().now().nanoseconds / 1e9
+                    #     # latency_ms = (current_time - msg_time) * 1000.0
+                    #     # self.get_logger().info(f"Latency on /scan: {latency_ms:.2f} ms")
+                    # # ==========================================
+
+                    # # ==========================================
+                    # # THE FIX: RE-STAMP ALL INCOMING DATA
+                    # # Overwrite the delayed MiR timestamps with current laptop time
+                    # # ==========================================
+                    # now_msg = self.get_clock().now().to_msg()
+                    
+                    # if hasattr(msg, 'header'):
+                    #     msg.header.stamp = now_msg
+                        
+                    # if topic == '/tf' or topic == '/tf_static':
+                    #     if hasattr(msg, 'transforms'):
+                    #         for t in msg.transforms:
+                    #             t.header.stamp = now_msg
+                    # # ==========================================
 
                     # 3. Publish to ROS 2
                     self.pubs[topic].publish(msg)

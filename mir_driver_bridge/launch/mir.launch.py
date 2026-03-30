@@ -163,6 +163,21 @@ def generate_launch_description():
         output='screen'
     )
 
+    laser_merger_params = os.path.join(
+        get_package_share_directory('mir_gazebo'),
+        'config',
+        'laser_merger_params.yaml'
+    )
+
+    laser_merger_node = Node(
+        package='dual_laser_merger',
+        executable='dual_laser_merger_node',
+        name='dual_laser_merger_node',
+        output='screen',
+        parameters=[laser_merger_params], # <-- use_sim_time omitted for the physical robot
+        remappings=[('/merged', '/scan')]
+    )
+
     # --- 5. Build and Return the Launch Description ---
     return LaunchDescription([
         declare_start_rsp_cmd,
@@ -180,5 +195,7 @@ def generate_launch_description():
         
         # b_rep117_laser_filter_node,
         # f_rep117_laser_filter_node,
-        fake_mir_joint_publisher_node
+        fake_mir_joint_publisher_node,
+
+        laser_merger_node
     ])
