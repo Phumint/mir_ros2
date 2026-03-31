@@ -279,11 +279,61 @@ class MiRBridge(Node):
                         msg_dict = filter_prepend_tf_prefix(msg_dict, self.tf_prefix)
 
                     # 2. Convert Dictionary -> ROS 2 Message
+                    # target_type = next((t.msg_type for t in self.topics if t.topic == topic), None)
+                    # if not target_type: continue
+
+                    # msg = target_type()
+                    # set_message_fields(msg, msg_dict)
+
+                    # 2. Convert Dictionary -> ROS 2 Message
                     target_type = next((t.msg_type for t in self.topics if t.topic == topic), None)
                     if not target_type: continue
 
                     msg = target_type()
-                    set_message_fields(msg, msg_dict)
+
+                    # ==========================================
+                    # PERFORMANCE FIX: Bypass slow set_message_fields 
+                    # for high-frequency/heavy data payloads
+                    # ==========================================
+                    if target_type == LaserScan:
+                        msg.header.stamp.sec = msg_dict['header']['stamp'].get('sec', 0)
+                        msg.header.stamp.nanosec = msg_dict['header']['stamp'].get('nanosec', 0)
+                        msg.header.frame_id = msg_dict['header'].get('frame_id', '')
+                        
+                        msg.angle_min = float(msg_dict.get('angle_min', 0.0))
+                        msg.angle_max = float(msg_dict.get('angle_max', 0.0))
+                        msg.angle_increment = float(msg_dict.get('angle_increment', 0.0))
+                        msg.time_increment = float(msg_dict.get('time_increment', 0.0))
+                        msg.scan_time = float(msg_dict.get('scan_time', 0.0))
+                        msg.range_min = float(msg_dict.get('range_min', 0.0))
+                        msg.range_max = float(msg_dict.get('range_max', 0.0))
+                        
+                        msg.ranges = [float(x) for x in msg_dict.get('ranges', [])]
+                        if 'intensities' in msg_dict and msg_dict['intensities']:
+                            msg.intensities = [float(x) for x in msg_dict['intensities']]
+                            
+                    elif target_type == TFMessage:
+                        from geometry_msgs.msg import TransformStamped
+                        for t_dict in msg_dict.get('transforms', []):
+                            t_msg = TransformStamped()
+                            t_msg.header.stamp.sec = t_dict['header']['stamp'].get('sec', 0)
+                            t_msg.header.stamp.nanosec = t_dict['header']['stamp'].get('nanosec', 0)
+                            t_msg.header.frame_id = t_dict['header'].get('frame_id', '')
+                            t_msg.child_frame_id = t_dict.get('child_frame_id', '')
+                            
+                            t_msg.transform.translation.x = float(t_dict['transform']['translation']['x'])
+                            t_msg.transform.translation.y = float(t_dict['transform']['translation']['y'])
+                            t_msg.transform.translation.z = float(t_dict['transform']['translation']['z'])
+                            
+                            t_msg.transform.rotation.x = float(t_dict['transform']['rotation']['x'])
+                            t_msg.transform.rotation.y = float(t_dict['transform']['rotation']['y'])
+                            t_msg.transform.rotation.z = float(t_dict['transform']['rotation']['z'])
+                            t_msg.transform.rotation.w = float(t_dict['transform']['rotation']['w'])
+                            msg.transforms.append(t_msg)
+                            
+                    else:
+                        # Fallback to standard conversion for small messages (odom, imu, etc.)
+                        set_message_fields(msg, msg_dict)
 
                     # # ==========================================
                     # # LASER FILTER: Stop Multiplexing!
