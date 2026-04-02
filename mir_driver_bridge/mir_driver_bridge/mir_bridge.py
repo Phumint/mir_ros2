@@ -246,7 +246,6 @@ class MiRBridge(Node):
                         "op": "subscribe",
                         "topic": cfg.topic,
                         "type": ros1_type,
-                        "throttle_rate": 125,  # ms between messages
                         "queue_length": 1       # don't let MiR buffer stale scans
                     }))
                 else:
