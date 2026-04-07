@@ -130,7 +130,7 @@ class MiRBridge(Node):
 
         # Thread-safe queue for sensor data (scans, odom, diagnostics)
         # TF bypasses this queue entirely via the fast-path in on_message
-        self.msg_queue = queue.Queue(maxsize=200)
+        self.msg_queue = queue.Queue(maxsize=5)
 
         # 2. Define Topics
         self.topics = [
