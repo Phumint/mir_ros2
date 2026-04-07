@@ -138,11 +138,11 @@ class MiRBridge(Node):
             TopicConfig('/odom',        Odometry,       'OUT', ros_topic='/odometry/filtered'),
             TopicConfig('/b_scan',      LaserScan,      'OUT'),
             TopicConfig('/f_scan',      LaserScan,      'OUT'),
-            TopicConfig('/imu_data',    Imu,            'OUT'),
-            TopicConfig('/robot_pose',  Pose,           'OUT'),
+            # TopicConfig('/imu_data',    Imu,            'OUT'),
+            # TopicConfig('/robot_pose',  Pose,           'OUT'),
             TopicConfig('/tf',          TFMessage,      'OUT'),
             TopicConfig('/tf_static',   TFMessage,      'OUT', latch=True),
-            TopicConfig('/diagnostics', DiagnosticArray,'OUT'),
+            # TopicConfig('/diagnostics', DiagnosticArray,'OUT'),
 
             # -- IN (ROS -> Robot) --
             TopicConfig('/cmd_vel',               Twist,       'IN'),
@@ -193,7 +193,7 @@ class MiRBridge(Node):
                 else:
                     # High-frequency sensors: Best Effort, don't buffer stale data
                     qos = QoSProfile(
-                        depth=5,
+                        depth=1,
                         durability=DurabilityPolicy.VOLATILE,
                         reliability=ReliabilityPolicy.BEST_EFFORT
                     )
