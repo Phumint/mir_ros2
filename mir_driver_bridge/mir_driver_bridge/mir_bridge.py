@@ -138,16 +138,11 @@ class MiRBridge(Node):
             TopicConfig('/odom',        Odometry,       'OUT', ros_topic='/odometry/filtered'),
             TopicConfig('/b_scan',      LaserScan,      'OUT'),
             TopicConfig('/f_scan',      LaserScan,      'OUT'),
-            # TopicConfig('/imu_data',    Imu,            'OUT'),
-            # TopicConfig('/robot_pose',  Pose,           'OUT'),
             TopicConfig('/tf',          TFMessage,      'OUT'),
             TopicConfig('/tf_static',   TFMessage,      'OUT', latch=True),
-            # TopicConfig('/diagnostics', DiagnosticArray,'OUT'),
 
             # -- IN (ROS -> Robot) --
             TopicConfig('/cmd_vel',               Twist,       'IN'),
-            TopicConfig('/move_base_simple/goal', PoseStamped, 'IN'),
-            TopicConfig('/initialpose',           PoseStamped, 'IN'),
         ]
 
         # 3. Setup Internals
