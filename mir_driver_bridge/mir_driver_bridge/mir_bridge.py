@@ -50,12 +50,6 @@ TF_STATIC_RSP_FRAMES = {
     'camera_infra1_optical_frame',
     'camera_infra2_frame',
     'camera_infra2_optical_frame',
-    # mount_box_link, ur_base_link etc. are fixed joints in moma.urdf.xacro
-    # and are published by the UR driver's RSP — also drop these if MiR
-    # ever sends them (it shouldn't, but safety net):
-    'mount_box_link',
-    'ur_base_link',
-    'ur_base',
     'odom',
 }
 
@@ -186,7 +180,7 @@ class MiRBridge(Node):
                         reliability=ReliabilityPolicy.RELIABLE
                     )
                 else:
-                    # High-frequency sensors: Best Effort, don't buffer stale data
+                    # High-frequency sensors, /scan, /odom: Best Effort, don't buffer stale
                     qos = QoSProfile(
                         depth=1,
                         durability=DurabilityPolicy.VOLATILE,
@@ -233,10 +227,6 @@ class MiRBridge(Node):
 
             if cfg.direction == 'OUT':
                 if cfg.topic in ('/b_scan', '/f_scan'):
-                    # Throttle scans at the rosbridge level.
-                    # This keeps the WebSocket clear so TF messages are never
-                    # queued behind large scan payloads.
-                    # 125ms = 8Hz, sufficient for Nav2 costmap at 5Hz update rate.
                     ws.send(json.dumps({
                         "op": "subscribe",
                         "topic": cfg.topic,
