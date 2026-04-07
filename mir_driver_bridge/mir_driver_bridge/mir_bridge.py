@@ -396,6 +396,13 @@ class MiRBridge(Node):
             msg = target_type()
 
             if target_type == LaserScan:
+
+                now = self.get_clock().now().to_msg()
+                msg.header.stamp = now 
+                
+                # Keep the original frame_id so the merger knows which is which
+                msg.header.frame_id = msg_dict['header'].get('frame_id', '')
+
                 msg.header.stamp.sec     = msg_dict['header']['stamp'].get('sec', 0)
                 msg.header.stamp.nanosec = msg_dict['header']['stamp'].get('nanosec', 0)
                 msg.header.frame_id      = msg_dict['header'].get('frame_id', '')
