@@ -62,6 +62,18 @@ If you want to launch with RViz2:
 ros2 launch mir_driver_bridge mir.launch.py mir_hostname:=10.38.11.17 rviz:=true
 ```
 
+## Launching the MiR in Gazebo
+
+Run the following command to launch the MiR in a Gazebo Simulation of an empty world:
+
+```bash
+ros2 launch mir_gazebo mir_empty_world.launch.py
+```
+If you want to launch with RViz2:
+```bash
+ros2 launch mir_gazebo mir_empty_world.launch.py rviz:=true
+```
+
 ## MiR100 ROS Data
 
 <table border="0" cellspacing="0" cellpadding="4" style="border: none;">
