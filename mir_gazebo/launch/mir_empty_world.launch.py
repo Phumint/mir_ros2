@@ -1,12 +1,18 @@
 import os
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, AppendEnvironmentVariable
+from launch.actions import IncludeLaunchDescription, AppendEnvironmentVariable, DeclareLaunchArgument
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import PathJoinSubstitution
+from launch.substitutions import PathJoinSubstitution, LaunchConfiguration
 from launch_ros.substitutions import FindPackageShare
 from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
+    # 0. Declare Launch Arguments
+    rviz_arg = DeclareLaunchArgument(
+        'rviz', default_value='false', description='Whether to start RViz2'
+    )
+    use_rviz = LaunchConfiguration('rviz')
+
     # 1. Paths to required packages
     ros_gz_sim_dir = FindPackageShare('ros_gz_sim')
     mir_gazebo_dir = FindPackageShare('mir_gazebo')
@@ -41,10 +47,12 @@ def generate_launch_description():
     spawn_robot = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([mir_gazebo_dir, 'launch', 'mir_gazebo_common.launch.py'])
-        )
+        ),
+        launch_arguments={'rviz': use_rviz}.items()
     )
 
     return LaunchDescription([
+        rviz_arg,
         set_ign_resource_path,
         gazebo_server,
         spawn_robot

@@ -2,11 +2,18 @@ import os
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
+from launch.conditions import IfCondition
 from ament_index_python.packages import get_package_share_directory
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
 def generate_launch_description():
+    # 0. Declare Launch Arguments
+    rviz_arg = DeclareLaunchArgument(
+        'rviz', default_value='false', description='Whether to start RViz2'
+    )
+    use_rviz = LaunchConfiguration('rviz')
+
     # 1. Define package paths
     mir_description_dir = FindPackageShare('mir_description')
     mir_gazebo_dir = FindPackageShare('mir_gazebo')
@@ -80,11 +87,13 @@ def generate_launch_description():
         executable = 'rviz2',
         name = 'rviz2',
         output = 'screen',
+        condition = IfCondition(use_rviz),
         arguments = ['-d', rviz_config_file],
         parameters = [{'use_sim_time': True}]
     )
 
     return LaunchDescription([
+        rviz_arg,
         robot_state_publisher_node,
         spawn_entity_node,
         ros_gz_bridge_node,
