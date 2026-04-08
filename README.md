@@ -4,7 +4,7 @@ The main purpose of this repo is the bridge script that gets and inject ROS2 dat
 
 The driver is made for the purpose of the MiR being integrated as a mobile base for a mobile manipulator hybrid (see [here](https://github.com/Phumint/mobile_manipulator_ROS2)).
 
-> **Note:** Aside from the MiR100, support for other types of MiR has not been tested with (though, it should work).
+> **Note:** Aside from the MiR100, support for other types of MiR has not been tested with (though, it should still work).
 
 ---
 
@@ -17,7 +17,7 @@ Specifically, this ROS 2 port utilizes their robust URDF setups from the `mir_de
 You can find their original repository (Noetic branch) here: 
 [DFKI-NI/mir_robot (noetic)](https://github.com/DFKI-NI/mir_robot/tree/noetic)
 
-We would also like to acknowledge the use of the `dual_laser_merger` package created by pradyum, which is integrated into this project. You can find that repository here:
+I would also like to acknowledge the use of the `dual_laser_merger` package created by pradyum, which is integrated into this project. You can find that repository here:
 [pradyum/dual_laser_merger](https://github.com/pradyum/dual_laser_merger.git)
 
 Additionally, this project was developed with coding assistance from Google Gemini. All AI-generated code was manually reviewed, tested, and modified by me to ensure it met project requirements and integrated correctly with the ROS 2 architecture.
@@ -25,6 +25,37 @@ Additionally, this project was developed with coding assistance from Google Gemi
 ## Requirements
 - ROS 2 (Humble/Iron/Jazzy supported)
 - Gazebo (Ignition, NOT Classic)
+
+## Cloning the Packages
+
+```bash
+# Navigate to the your workspace's src folder, in my case it is "mir_ws" 
+cd ~/mir_ws/src
+
+# Clone this repository
+git clone https://github.com/Phumint/mir_ros2.git
+
+# Build all the packages
+cd ~/mir_ws
+colcon build --symlink-install 
+
+# Source your workspace
+source install/setup.bash
+```
+
+## Launching the MiR Driver Bridge (Real Hardware)
+> **Note:** For optimal speed and stability, I highly recommended to connect to the MiR 100 via a wired Ethernet connection rather than Wi-Fi.
+
+Run the following command to launch the driver. Replace the IP address with your robot's specific IP (the launch file's default is `192.168.12.20`):
+
+```bash
+ros2 launch mir_driver_bridge mir.launch.py mir_hostname:10.38.11.17
+```
+Verify the connection by listing the active topics:
+```bash
+ros2 topic list
+```
+(*Expected output should include: `/odom`, `/b_scan`, `/f_scan`, `/scan`, `/tf`, and `/tf_static`*)
 
 ## MiR100 ROS Data
 
