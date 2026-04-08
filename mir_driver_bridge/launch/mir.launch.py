@@ -19,6 +19,8 @@ def generate_launch_description():
     tf_prefix = LaunchConfiguration('tf_prefix')
     mir_hostname = LaunchConfiguration('mir_hostname')
     disable_map = LaunchConfiguration('disable_map')
+    rviz = LaunchConfiguration('rviz')
+    rviz_config = LaunchConfiguration('rviz_config')
 
     # --- 2. Declare Arguments ---
     declare_mir_type_cmd = DeclareLaunchArgument(
@@ -32,6 +34,14 @@ def generate_launch_description():
     
     declare_disable_map_cmd = DeclareLaunchArgument(
         'disable_map', default_value='false', description="Disable the map topic and map -> odom TF")
+
+    declare_rviz_cmd = DeclareLaunchArgument(
+        'rviz', default_value='false', description="Whether to start RViz")
+        
+    declare_rviz_config_cmd = DeclareLaunchArgument(
+        'rviz_config', 
+        default_value=os.path.join(get_package_share_directory('mir_driver_bridge'), 'rviz', 'rviz_bridge.rviz'), 
+        description="Full path to the RViz config file to use")
 
     # --- 3. Process URDF/Xacro ---
     # Assuming your xacro file is inside 'mir_description/urdf/mir.urdf.xacro'
@@ -178,6 +188,16 @@ def generate_launch_description():
         remappings=[('/merged', '/scan')]
     )
 
+    # RViz Node
+    rviz_node = Node(
+        package='rviz2',
+        executable='rviz2',
+        name='rviz2',
+        output='screen',
+        condition=IfCondition(rviz),
+        arguments=['-d', rviz_config]
+    )
+
     # --- 5. Build and Return the Launch Description ---
     return LaunchDescription([
         declare_start_rsp_cmd,
@@ -185,6 +205,8 @@ def generate_launch_description():
         declare_tf_prefix_cmd,
         declare_mir_hostname_cmd,
         declare_disable_map_cmd,
+        declare_rviz_cmd,
+        declare_rviz_config_cmd,
         
         rsp_node,
         # tf_remove_state_publisher_frames_node,
@@ -197,5 +219,6 @@ def generate_launch_description():
         # f_rep117_laser_filter_node,
         fake_mir_joint_publisher_node,
 
-        laser_merger_node
+        laser_merger_node,
+        rviz_node
     ])
