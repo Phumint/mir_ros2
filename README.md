@@ -49,13 +49,18 @@ source install/setup.bash
 Run the following command to launch the driver. Replace the IP address with your robot's specific IP (the launch file's default is `192.168.12.20`):
 
 ```bash
-ros2 launch mir_driver_bridge mir.launch.py mir_hostname:10.38.11.17
+ros2 launch mir_driver_bridge mir.launch.py mir_hostname:=10.38.11.17
 ```
 Verify the connection by listing the active topics:
 ```bash
 ros2 topic list
 ```
 (*Expected output should include: `/odom`, `/b_scan`, `/f_scan`, `/scan`, `/tf`, and `/tf_static`*)
+
+If you want to launch with RViz2:
+```bash
+ros2 launch mir_driver_bridge mir.launch.py mir_hostname:=10.38.11.17 rviz:=true
+```
 
 ## MiR100 ROS Data
 
