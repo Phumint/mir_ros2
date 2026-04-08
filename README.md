@@ -74,7 +74,7 @@ If you want to launch with RViz2:
 ros2 launch mir_gazebo mir_empty_world.launch.py rviz:=true
 ```
 
-| <img src="https://github.com/user-attachments/assets/b629ee84-331a-4cc7-b19b-ecc370ad54ba" alt="Gazebo View" width="100%" /> | <img src="https://github.com/user-attachments/assets/3de32e14-157a-4c44-adae-cbd0e76f04de" alt="RViz2 View" width="100%" /> |
+| <img src="https://github.com/user-attachments/assets/b629ee84-331a-4cc7-b19b-ecc370ad54ba" alt="RViz2 View" width="450" height="300" /> | <img src="https://github.com/user-attachments/assets/3de32e14-157a-4c44-adae-cbd0e76f04de" alt="Gazebo View" width="450" height="300" /> |
 | :---: | :---: |
 | *Robot state and sensor data visualized in RViz2* | *MiR 100 spawned in an empty Gazebo world* |
 
