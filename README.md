@@ -62,7 +62,7 @@ If you want to launch with RViz2:
 ros2 launch mir_driver_bridge mir.launch.py mir_hostname:=10.38.11.17 rviz:=true
 ```
 
-## Launching the MiR in Gazebo
+## Launching the MiR in Gazebo (Simulation)
 
 Run the following command to launch the MiR in a Gazebo Simulation of an empty world:
 
@@ -78,7 +78,81 @@ ros2 launch mir_gazebo mir_empty_world.launch.py rviz:=true
 | :---: | :---: |
 | *Robot state and sensor data visualized in RViz2* | *MiR 100 spawned in an empty Gazebo world* |
 
+## Installing chrony to synchronize system time automatically
+
+> **Note:** This section is taken straight out of the [DFKI-NI/mir_robot (noetic)](https://github.com/DFKI-NI/mir_robot/tree/noetic) repository. It is highly recommended to do this procedure to synchronize the MiR clock with your external PC for the best performance.
+
+If you have an external PC integrated into your robot that is on the same wired
+network as the MiR PC, you can use `chrony` to automatically synchronize the
+MiR's system time. Unfortunately, this method is not easy to install.
+
+Let's call the external PC `external-pc`. That PC's clock is our reference
+clock. It is synced to an NTP clock whenever the `external-pc` has access to
+the internet. To implement this synchronization solution, install `chrony` on
+both the `external-pc` and the internal PC of the MiR, and set up the
+`external-pc` as the chrony server and the internal MiR PC as the chrony
+client. This way, the clocks on these systems always stay in sync without any
+manual interaction.
+
+To install things on the internal MiR PC:
+
+* Connect a monitor, keyboard and USB stick with a live Linux system to the
+  ports that are exposed on one corner of the MiR.
+* Boot into the live USB Linux system.
+* `chroot` into the MiR PC:
+
+    1. Mount MiR partition and bind /dev, /run etc.
+       You can use fdisk -l to figure out which partition to mount.
+       (Here it's `sda3`):
+
+       ```bash
+       sudo mkdir -p /media/mir
+       sudo mount /dev/sda3 /media/mir
+
+       for dir in /dev /dev/pts /proc /sys /run; do sudo mount --bind $dir /media/mir/@$dir; done
+       ```
+
+    2. `chroot` into the MiR PC:
+
+       ```bash
+       sudo chroot /media/mir/@/
+       ```
+
+* Create user:
+
+   ```bash
+   adduser newuser
+   usermod -aG sudo newuser
+   ```
+
+* Reboot and log into MiR PC via SSH and the newly created user name.
+* Install Chrony:
+
+   ```bash
+   sudo apt update
+   sudo apt install chrony
+
+   # if not installable (to fix broken dependencies):
+   sudo apt -f install
+   sudo apt install chrony
+   ```
+
+* Set up `/etc/chrony/chrony.conf`.
+* Make sure all old ntp configs are configured in chrony. For this, add the
+  following to your chrony.conf (the old ntp.conf part is commented out):
+
+```bash
+# Clients from this subnet have unlimited access, but only if
+# cryptographically authenticated.
+#restrict 192.168.12.255 mask 255.255.255.0 nomodify notrap nopeer
+allow 192.168.12.0/24 nomodify notrap nopeer
+```
+
+* Restart chrony service.
+
 ## MiR100 ROS Data
+
+> **Note:** This data was extracted directly from the MiR 100's onboard computer via SSH.
 
 <table border="0" cellspacing="0" cellpadding="4" style="border: none;">
   <thead>
@@ -108,8 +182,6 @@ ros2 launch mir_gazebo mir_empty_world.launch.py rviz:=true
     <tr><td>/mir_param_manager</td><td>/wifi_diagnostics</td><td>/wifi_watchdog</td></tr>
   </tbody>
 </table>
-
-<br>
 
 <table border="0" cellspacing="0" cellpadding="4" style="border: none;">
   <thead>
