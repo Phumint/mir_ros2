@@ -62,6 +62,14 @@ If you want to launch with RViz2:
 ros2 launch mir_driver_bridge mir.launch.py mir_hostname:=10.38.11.17 rviz:=true
 ```
 
+### Teleoperating the MiR
+
+After launching the MiR Driver, you can teleoperate the robot with teleop twist keyboard:
+
+```bash
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
+```
+
 ## Launching the MiR in Gazebo (Simulation)
 
 Run the following command to launch the MiR in a Gazebo Simulation of an empty world:
