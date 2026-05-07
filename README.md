@@ -23,25 +23,41 @@ I would also like to acknowledge the use of the `dual_laser_merger` package crea
 Additionally, this project was developed with coding assistance from Google Gemini. All AI-generated code was manually reviewed, tested, and modified by me to ensure it met project requirements and integrated correctly with the ROS 2 architecture.
 
 ## Requirements
-- ROS 2 (Humble/Iron/Jazzy supported)
-- Gazebo (Ignition, NOT Classic)
+- ROS 2 Humble
+- Gazebo (Ignition Fortress, NOT Classic)
 
-## Cloning the Packages
+Install the required ROS packages before building:
 
 ```bash
-# Navigate to the your workspace's src folder, in my case it is "mir_ws" 
+sudo apt update
+sudo apt install \
+  ros-humble-ros-gz \
+  ros-humble-robot-state-publisher \
+  ros-humble-xacro \
+  ros-humble-teleop-twist-keyboard
+```
+
+## Cloning and Building
+
+```bash
+# Navigate to your workspace's src folder
 cd ~/mir_ws/src
 
-# Clone this repository
+# Clone this repository (includes all packages)
 git clone https://github.com/Phumint/mir_ros2.git
 
-# Build all the packages
+# Build all packages
 cd ~/mir_ws
-colcon build --symlink-install 
+colcon build --symlink-install
 
-# Source your workspace
+# Source your workspace — required in every new terminal
 source install/setup.bash
 ```
+
+> **Tip:** Add the source line to your `~/.bashrc` so you don't need to run it manually in every terminal:
+> ```bash
+> echo "source ~/mir_ws/install/setup.bash" >> ~/.bashrc
+> ```
 
 ## Launching the MiR Driver Bridge (Real Hardware)
 > **Note:** For optimal speed and stability, I highly recommended to connect to the MiR 100 via a wired Ethernet connection rather than Wi-Fi.
