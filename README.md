@@ -30,11 +30,8 @@ Install the required ROS packages before building:
 
 ```bash
 sudo apt update
-sudo apt install \
-  ros-humble-ros-gz \
-  ros-humble-robot-state-publisher \
-  ros-humble-xacro \
-  ros-humble-teleop-twist-keyboard
+cd ~/mir_ws
+rosdep install --from-paths src --ignore-src -r -y
 ```
 
 ## Cloning and Building
