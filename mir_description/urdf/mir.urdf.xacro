@@ -3,8 +3,8 @@
 
   <xacro:include filename="$(find mir_description)/urdf/include/mir_v1.urdf.xacro" />
 
-  <xacro:arg name="tf_prefix" default="" />
-  <xacro:property name="prefix" value="$(arg tf_prefix)" />
+  <xacro:arg name="mir_prefix" default="" />
+  <xacro:property name="prefix" value="$(arg mir_prefix)" />
   <xacro:property name="prefix_with_slash" value="${prefix + '/' if prefix != '' else ''}" />
 
   <xacro:mir prefix="${prefix_with_slash}" />
