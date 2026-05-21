@@ -129,7 +129,7 @@ class MiRBridge(Node):
         # 2. Define Topics
         self.topics = [
             # -- OUT (Robot -> ROS) --
-            TopicConfig('/odom',        Odometry,       'OUT', ros_topic='/odometry/filtered'),
+            TopicConfig('/odom',        Odometry,       'OUT'),
             TopicConfig('/b_scan',      LaserScan,      'OUT'),
             TopicConfig('/f_scan',      LaserScan,      'OUT'),
             TopicConfig('/tf',          TFMessage,      'OUT'),
