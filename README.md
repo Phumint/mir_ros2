@@ -1,10 +1,10 @@
 # MiR100 Bridge for ROS2
 
-The main purpose of this repo is the bridge script that gets and inject ROS2 data from and into the MiR100.  
+This repo's main purpose is a bridge node that gets data from and injects commands into a MiR100 over its REST/ROS interfaces, exposing it as native ROS 2 topics.
 
-The driver is made for the purpose of the MiR being integrated as a mobile base for a mobile manipulator hybrid (see [here](https://github.com/Phumint/mobile_manipulator_ROS2)).
+It is built for using the MiR as the mobile base of a mobile manipulator hybrid (see [here](https://github.com/Phumint/mobile_manipulator_ROS2)).
 
-> **Note:** Aside from the MiR100, support for other types of MiR has not been tested with (though, it should still work).
+> **Note:** Aside from the MiR100, support for other MiR variants (e.g. `mir_250`) has not been tested, though the `mir_type` launch argument exists for it and it should still work.
 
 ---
 
@@ -57,7 +57,7 @@ source install/setup.bash
 > ```
 
 ## Launching the MiR Driver Bridge (Real Hardware)
-> **Note:** For optimal speed and stability, I highly recommended to connect to the MiR 100 via a wired Ethernet connection rather than Wi-Fi.
+> **Note:** For optimal speed and stability, I highly recommend connecting to the MiR100 via a wired Ethernet connection rather than Wi-Fi.
 
 Run the following command to launch the driver. Replace the IP address with your robot's specific IP (the launch file's default is `192.168.12.20`):
 
@@ -74,6 +74,16 @@ If you want to launch with RViz2:
 ```bash
 ros2 launch mir_driver_bridge mir.launch.py mir_hostname:=10.38.11.17 rviz:=true
 ```
+
+Other useful launch arguments for `mir.launch.py`:
+
+| Argument | Default | Description |
+| --- | --- | --- |
+| `mir_type` | `mir_100` | MiR variant; `mir_100` or `mir_250` |
+| `tf_prefix` | *(empty)* | TF prefix applied to all of the MiR's frames |
+| `disable_map` | `false` | Disable the `/map` topic and `map -> odom` TF |
+| `start_rsp` | `true` | Whether to start `robot_state_publisher` |
+| `rviz_config` | `mir_driver_bridge/rviz/rviz_bridge.rviz` | Path to the RViz config file to use |
 
 ### Teleoperating the MiR
 
@@ -173,7 +183,10 @@ allow 192.168.12.0/24 nomodify notrap nopeer
 
 ## MiR100 ROS Data
 
-> **Note:** This data was extracted directly from the MiR 100's onboard computer via SSH.
+> **Note:** This data was extracted directly from the MiR100's onboard computer via SSH. It documents the native ROS 1 nodes/topics running on the robot itself (most are irrelevant to this bridge, which only consumes a handful of them), kept here as a reference for anyone exploring what else the MiR exposes.
+
+<details>
+<summary>Onboard node list</summary>
 
 <table border="0" cellspacing="0" cellpadding="4" style="border: none;">
   <thead>
@@ -204,12 +217,12 @@ allow 192.168.12.0/24 nomodify notrap nopeer
   </tbody>
 </table>
 
+</details>
+
+<details>
+<summary>Onboard topic list</summary>
+
 <table border="0" cellspacing="0" cellpadding="4" style="border: none;">
-  <thead>
-    <tr>
-      <th colspan="3" style="text-align: left; border: none;">Topic List</th>
-    </tr>
-  </thead>
   <tbody>
     <tr><td>/LightCtrl/bms_data</td><td>/data_events/maps</td><td>/move_base_node/current_goal</td></tr>
     <tr><td>/LightCtrl/charging_state</td><td>/data_events/mission_groups</td><td>/move_base_node/global_costmap/inflated_obstacles</td></tr>
@@ -279,3 +292,5 @@ allow 192.168.12.0/24 nomodify notrap nopeer
     <tr><td>/data_events/footprints</td><td>/move_base_node/SBPLLatticePlanner/visualization_marker</td><td>/wifi_watchdog/ping</td></tr>
   </tbody>
 </table>
+
+</details>
